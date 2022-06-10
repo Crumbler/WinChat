@@ -1,8 +1,12 @@
 
 #include <cstdio>
 
+#include <stdexcept>
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
+#include "TcpSocket.hpp"
 
 int main()
 {
@@ -13,25 +17,20 @@ int main()
     int iResult = WSAStartup(wVersionRequested, &wsaData);
     if (iResult != 0)
     {
-        printf("WSAStartup failed: %d\n", iResult);
+        fprintf(stderr, "WSAStartup failed: %d\n", iResult);
         return 1;
     }
 
-    ADDRINFOW hints, *result;
 
-    ZeroMemory(&hints, sizeof(hints));
+    TcpSocket* listenSocket = new TcpSocket();
 
-    iResult = GetAddrInfoW(L"127.0.0.1", L"27000", &hints, &result);
-    if (iResult != 0)
-    {
-        printf("getaddrinfo failed: %d\n", iResult);
-        return 1;
-    }
+    listenSocket->Bind(nullptr, L"27000");
+
 
     if (WSACleanup() != 0)
     {
         iResult = WSAGetLastError();
-        printf("WSACleanup failed: %d\n", iResult);
+        fprintf(stderr,"WSACleanup failed: %d\n", iResult);
         return 1;
     }
 
