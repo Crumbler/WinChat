@@ -11,9 +11,17 @@ TcpSocket::TcpSocket()
     }
 }
 
+TcpSocket::TcpSocket(SOCKET sock)
+{
+    this->sock = sock;
+}
+
 TcpSocket::~TcpSocket()
 {
-    closesocket(this->sock);
+    if (this->sock != INVALID_SOCKET)
+    {
+        closesocket(this->sock);
+    }
 }
 
 void TcpSocket::Bind(const wchar_t *addr, const wchar_t *port)
@@ -37,9 +45,38 @@ void TcpSocket::Bind(const wchar_t *addr, const wchar_t *port)
     if (iResult == SOCKET_ERROR)
     {
         fprintf(stderr, "Error at bind(): %d\n", WSAGetLastError());
-        FreeAddrInfoW(result);
-        closesocket(this->sock);
     }
 
     FreeAddrInfoW(result);
+}
+
+void TcpSocket::Listen(int backlog)
+{
+    if (listen(this->sock, backlog) == SOCKET_ERROR)
+    {
+        fprintf(stderr, "Error at listen(): %d\n", WSAGetLastError());
+        closesocket(this->sock);
+        this->sock = INVALID_SOCKET;
+    }
+}
+
+TcpSocket* TcpSocket::Accept()
+{
+    SOCKET sock = accept(this->sock, nullptr, nullptr);
+    if (sock == INVALID_SOCKET)
+    {
+        fprintf(stderr, "accept failed: %d\n", WSAGetLastError());
+        return nullptr;
+    }
+
+    return new TcpSocket(sock);
+}
+
+void TcpSocket::Shutdown(int how)
+{
+    int iResult = shutdown(this->sock, how);
+    if (iResult != 0)
+    {
+        fprintf(stderr, "shutdown failed: %d\n", WSAGetLastError());
+    }
 }

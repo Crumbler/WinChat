@@ -13,6 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -22,6 +23,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -35,7 +37,9 @@
 		<Linker>
 			<Add library="ws2_32" />
 		</Linker>
+		<Unit filename="include/TcpSocket.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/TcpSocket.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

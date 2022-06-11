@@ -25,7 +25,12 @@ int main()
     TcpSocket* listenSocket = new TcpSocket();
 
     listenSocket->Bind(nullptr, L"27000");
+    listenSocket->Listen(10);
+    listenSocket->Accept();
 
+    listenSocket->Shutdown(SD_BOTH);
+
+    delete listenSocket;
 
     if (WSACleanup() != 0)
     {
