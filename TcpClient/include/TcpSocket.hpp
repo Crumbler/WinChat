@@ -12,6 +12,7 @@ class TcpSocket
 
         void Bind(const wchar_t *addr, const wchar_t *port);
         void Listen(int backlog);
+        int Send(const char *buf, int length);
         TcpSocket* Accept();
         void Shutdown(int how);
         int Receive(char *buf, int length, int flags);

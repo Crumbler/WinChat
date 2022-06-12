@@ -15,6 +15,7 @@ class TcpSocket
         TcpSocket* Accept();
         void Shutdown(int how);
         int Receive(char *buf, int length, int flags);
+        SOCKET getSocket();
 
     protected:
 

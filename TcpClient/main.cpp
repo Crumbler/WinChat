@@ -28,8 +28,21 @@ int main()
     if (res)
     {
         printf("Got connection\n");
+
+        char sendBuf[256];
+        strcpy(sendBuf + 1, "Hello");
+        int len = strlen(sendBuf + 1) + 1;
+        sendBuf[0] = len;
+        printf("Sending message of length: %d\n", len);
+
+        int bytesSent = socket->Send(sendBuf, len);
+
+        printf("Sent %d bytes\n", bytesSent);
+
         socket->Shutdown(SD_BOTH);
     }
+
+    getchar();
 
     delete socket;
 

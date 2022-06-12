@@ -60,6 +60,18 @@ void TcpSocket::Listen(int backlog)
     }
 }
 
+int TcpSocket::Send(const char* buf, int length)
+{
+    int iResult = send(this->sock, buf, length, 0);
+    if (iResult == SOCKET_ERROR)
+    {
+        fprintf(stderr, "Error at send(): %d\n", WSAGetLastError());
+        return -1;
+    }
+
+    return iResult;
+}
+
 TcpSocket* TcpSocket::Accept()
 {
     SOCKET sock = accept(this->sock, nullptr, nullptr);

@@ -85,3 +85,8 @@ int TcpSocket::Receive(char* buf, int length, int flags)
 {
     return recv(this->sock, buf, length, flags);
 }
+
+SOCKET TcpSocket::getSocket()
+{
+    return this->sock;
+}
