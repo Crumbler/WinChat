@@ -21,21 +21,17 @@ int main()
         return 1;
     }
 
-    TcpSocket* listenSocket = new TcpSocket();
+    TcpSocket* socket = new TcpSocket();
 
-    listenSocket->Bind(nullptr, L"27000");
-    listenSocket->Listen(10);
-    TcpSocket *clientSocket = listenSocket->Accept();
+    const bool res = socket->Connect(L"127.0.0.1", L"27000");
 
-    char *buf = new char[512];
+    if (res)
+    {
+        printf("Got connection\n");
+        socket->Shutdown(SD_BOTH);
+    }
 
-    printf("Got connection\n");
-
-    listenSocket->Shutdown(SD_BOTH);
-
-    delete clientSocket;
-    delete[] buf;
-    delete listenSocket;
+    delete socket;
 
     if (WSACleanup() != 0)
     {

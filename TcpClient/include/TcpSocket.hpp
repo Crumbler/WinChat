@@ -15,6 +15,7 @@ class TcpSocket
         TcpSocket* Accept();
         void Shutdown(int how);
         int Receive(char *buf, int length, int flags);
+        bool Connect(const wchar_t *addr, const wchar_t *port);
 
     protected:
 

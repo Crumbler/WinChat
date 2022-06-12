@@ -85,3 +85,31 @@ int TcpSocket::Receive(char* buf, int length, int flags)
 {
     return recv(this->sock, buf, length, flags);
 }
+
+bool TcpSocket::Connect(const wchar_t* addr, const wchar_t* port)
+{
+    ADDRINFOW hints, *result;
+
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    int iResult = GetAddrInfoW(addr, port, &hints, &result);
+    if (iResult != 0)
+    {
+        fprintf(stderr, "getaddrinfo failed: %d\n", iResult);
+        return false;
+    }
+
+    iResult = connect(this->sock, result->ai_addr, result->ai_addrlen);
+    if (iResult == SOCKET_ERROR)
+    {
+        fprintf(stderr, "Error at connect(): %d\n", WSAGetLastError());
+    }
+
+    FreeAddrInfoW(result);
+
+    return iResult == 0;
+}
