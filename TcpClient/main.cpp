@@ -30,12 +30,19 @@ int main()
         printf("Got connection\n");
 
         char sendBuf[256];
-        strcpy(sendBuf + 1, "Hello");
-        int len = strlen(sendBuf + 1) + 1;
+
+        for (int i = 1; i < 254; ++i)
+        {
+            sendBuf[i] = 'n';
+        }
+        sendBuf[254] = 'v';
+        sendBuf[255] = 0;
+
+        int len = 255;
         sendBuf[0] = len;
         printf("Sending message of length: %d\n", len);
 
-        int bytesSent = socket->Send(sendBuf, len);
+        int bytesSent = socket->Send(sendBuf, len + 1);
 
         printf("Sent %d bytes\n", bytesSent);
 

@@ -103,9 +103,9 @@ unsigned __stdcall WorkerThread(void *param)
         }
         else
         {
-            int msgLength = pKey->inBuf.buf[0];
+            char msgLength = pKey->inBuf.buf[0];
 
-            printf("Received %d byte(s) message: %s\n", msgLength, pKey->inBuf.buf + 1);
+            printf("Received %lu byte(s) of a %hhu character(s) message: %s\n", trBytes, msgLength, pKey->inBuf.buf + 1);
 
             pKey->ReceiveAsync();
         }

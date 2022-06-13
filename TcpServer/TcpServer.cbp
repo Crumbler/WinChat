@@ -37,8 +37,10 @@
 		<Linker>
 			<Add library="ws2_32" />
 		</Linker>
+		<Unit filename="include/ClientKey.hpp" />
 		<Unit filename="include/TcpSocket.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/ClientKey.cpp" />
 		<Unit filename="src/TcpSocket.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />

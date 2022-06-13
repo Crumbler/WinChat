@@ -8,7 +8,8 @@ struct ClientKey
 {
     TcpSocket *socket;
     WSABUF inBuf, outBuf;
-    OVERLAPPED *overlapped;
+    char *inBufBase, *outBufBase;
+    OVERLAPPED *ovIn, ovOut;
 
     ClientKey(TcpSocket *socket, int bufSize);
 
