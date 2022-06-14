@@ -15,6 +15,9 @@ ClientKey::ClientKey(TcpSocket *socket, int bufSize)
     this->outBuf.buf = this->outBufBase;
     this->outBuf.len = bufSize;
 
+    this->ovIn.ov.hEvent = nullptr;
+    this->ovOut.ov.hEvent = nullptr;
+
     this->ResetInput();
 }
 

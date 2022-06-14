@@ -113,5 +113,24 @@ bool ConfirmName()
 
 void SendMessages()
 {
+    char *buf = new char[bufSize];
 
+    buf[0] = MessageType::ClientMessage;
+
+    printf("Enter messages:\n");
+
+    while (true)
+    {
+        fgets(buf + 2, bufSize - 2, stdin);
+
+        // Overwrite the newline character
+        int len = strlen(buf + 2);
+        buf[len + 2 - 1] = 0;
+
+        buf[1] = len;
+
+        sock->Send(buf, len + 2);
+    }
+
+    delete[] buf;
 }

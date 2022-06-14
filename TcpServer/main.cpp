@@ -153,6 +153,10 @@ unsigned __stdcall WorkerThread(void *param)
             pKey->SendAsync(1);
 
             break;
+
+        case MessageType::ClientMessage:
+
+            break;
         }
 
         pKey->ResetInput();
