@@ -8,6 +8,8 @@
 
 #include "TcpSocket.hpp"
 
+#include "MessageType.hpp"
+
 int main()
 {
     WSADATA wsaData;
@@ -31,18 +33,19 @@ int main()
 
         char sendBuf[256];
 
-        for (int i = 1; i < 254; ++i)
-        {
-            sendBuf[i] = 'n';
-        }
-        sendBuf[254] = 'v';
-        sendBuf[255] = 0;
+        sendBuf[0] = MessageType::NameOffer;
 
-        int len = 255;
-        sendBuf[0] = len;
+        strcpy(sendBuf + 2, "Crumbler");
+
+        // Account for null-terminating character
+        int len = strlen(sendBuf + 2) + 1;
+        sendBuf[1] = len;
+
+        sendBuf[len + 2] = 0;
+
         printf("Sending message of length: %d\n", len);
 
-        int bytesSent = socket->Send(sendBuf, len + 1);
+        int bytesSent = socket->Send(sendBuf, len + 2);
 
         printf("Sent %d bytes\n", bytesSent);
 

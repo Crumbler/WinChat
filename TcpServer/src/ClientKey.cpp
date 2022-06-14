@@ -1,4 +1,5 @@
 #include "ClientKey.hpp"
+#include "IOType.hpp"
 
 #include <cstdio>
 
@@ -16,18 +17,36 @@ ClientKey::ClientKey(TcpSocket *socket, int bufSize)
 
     this->ovIn = new OVERLAPPED();
     this->ovOut = new OVERLAPPED();
+
+    this->ResetInput();
 }
 
-void ClientKey::ReceiveAsync()
+void ClientKey::ReceiveAsync(int bytes)
 {
-    DWORD bytes, flags = 0;
+    this->ovIn->hEvent = (HANDLE)IOType::Receive;
+
+    this->inBuf.len = bytes;
+
+    DWORD bytesReceived, flags = 0;
     int iResult = WSARecv(this->socket->getSocket(), &this->inBuf, 1,
-                          &bytes, &flags, this->ovIn, nullptr);
+                          &bytesReceived, &flags, this->ovIn, nullptr);
 
     if (iResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
     {
         fprintf(stderr, "WSARecv() error:%d\n", WSAGetLastError());
     }
+}
+
+void ClientKey::AdvanceInputBuffer(int bytes)
+{
+    this->inBuf.buf += bytes;
+}
+
+void ClientKey::ResetInput()
+{
+    this->bytesExpected = 0;
+    this->bytesReceived = 0;
+    this->inBuf.buf = this->inBufBase;
 }
 
 ClientKey::~ClientKey()

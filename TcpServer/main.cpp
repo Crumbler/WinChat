@@ -8,6 +8,9 @@
 
 #include "ClientKey.hpp"
 #include "TcpSocket.hpp"
+#include "IOType.hpp"
+
+constexpr int socketBufSize = 256;
 
 HANDLE cmpPort;
 
@@ -53,7 +56,7 @@ int main()
         TcpSocket *clientSocket = listenSocket->Accept();
         printf("Got connection\n");
 
-        ClientKey *key = new ClientKey(clientSocket, 256);
+        ClientKey *key = new ClientKey(clientSocket, socketBufSize);
 
         HANDLE hRes = CreateIoCompletionPort((HANDLE)clientSocket->getSocket(),
             cmpPort, (ULONG_PTR)key, 0);
@@ -63,7 +66,8 @@ int main()
             fprintf(stderr, "Addition to port failed:%lu\n", GetLastError());
         }
 
-        key->ReceiveAsync();
+        key->bytesExpected = 2;
+        key->ReceiveAsync(2);
     }
 
     delete listenSocket;
@@ -96,18 +100,50 @@ unsigned __stdcall WorkerThread(void *param)
         if (iResult == 0)
         {
             fprintf(stderr, "Receive error: %lu\n", GetLastError());
+            continue;
         }
         else if (iResult != 0 && trBytes == 0)
         {
             printf("Client disconnected\n");
+            continue;
         }
-        else
+
+        IOType ioType = (IOType)pKey->inBufBase[0];
+
+        if (ioType == IOType::Send)
         {
-            char msgLength = pKey->inBuf.buf[0];
-
-            printf("Received %lu byte(s) of a %hhu character(s) message: %s\n", trBytes, msgLength, pKey->inBuf.buf + 1);
-
-            pKey->ReceiveAsync();
+            continue;
         }
+
+        // Incomplete receival
+        pKey->bytesReceived += trBytes;
+        const int bytesLeftToReceive = pKey->bytesExpected - pKey->bytesReceived;
+        if (bytesLeftToReceive > 0)
+        {
+            printf("Received incomplete message with %d missing bytes\n", bytesLeftToReceive);
+            pKey->AdvanceInputBuffer(trBytes);
+            pKey->ReceiveAsync(bytesLeftToReceive);
+            continue;
+        }
+
+        int msgType = pKey->inBufBase[0];
+        int msgLength = pKey->inBufBase[1];
+
+        // If message type and length have been received
+        if (pKey->bytesReceived == 2)
+        {
+            printf("Receiving message of type %d and length %d\n", msgType, msgLength);
+
+            // Receive the message itself
+            pKey->AdvanceInputBuffer(2);
+            pKey->ReceiveAsync(msgLength);
+            continue;
+        }
+
+        printf("Received a %d character message:\n%s\n", msgLength, pKey->inBufBase + 2);
+
+        pKey->ResetInput();
+        pKey->bytesExpected = 2;
+        pKey->ReceiveAsync(2);
     }
 }
