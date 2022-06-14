@@ -88,9 +88,9 @@ bool ConfirmName()
 
     memcpy(buf + 2, username, usernameLength);
 
-    int bytesSent = sock->Send(buf, usernameLength + 2);
+    sock->Send(buf, usernameLength + 2);
 
-    printf("Sent name\n", bytesSent);
+    printf("Sent name\n");
 
     // Receive name approval or disapproval
     sock->Receive(buf, 1, 0);
