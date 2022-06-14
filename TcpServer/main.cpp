@@ -8,7 +8,9 @@
 
 #include "ClientKey.hpp"
 #include "TcpSocket.hpp"
+#include "MessageType.hpp"
 #include "IOType.hpp"
+#include "IOOverlapped.hpp"
 
 constexpr int socketBufSize = 256;
 
@@ -90,12 +92,13 @@ unsigned __stdcall WorkerThread(void *param)
 
     DWORD trBytes;
     ClientKey *pKey;
-    OVERLAPPED *pOv;
+    IOOverlapped *pOv;
 
     while (true)
     {
         WINBOOL iResult =
-            GetQueuedCompletionStatus(cmpPort, &trBytes, (PULONG_PTR)&pKey, &pOv, INFINITE);
+            GetQueuedCompletionStatus(cmpPort, &trBytes, (PULONG_PTR)&pKey,
+                                      (OVERLAPPED **)&pOv, INFINITE);
 
         if (iResult == 0)
         {
@@ -108,7 +111,7 @@ unsigned __stdcall WorkerThread(void *param)
             continue;
         }
 
-        IOType ioType = (IOType)pKey->inBufBase[0];
+        IOType ioType = pOv->type;
 
         if (ioType == IOType::Send)
         {
@@ -141,6 +144,16 @@ unsigned __stdcall WorkerThread(void *param)
         }
 
         printf("Received a %d character message:\n%s\n", msgLength, pKey->inBufBase + 2);
+
+        switch (msgType)
+        {
+        case MessageType::NameOffer:
+            pKey->outBufBase[0] = MessageType::NameAccepted;
+
+            pKey->SendAsync(1);
+
+            break;
+        }
 
         pKey->ResetInput();
         pKey->bytesExpected = 2;

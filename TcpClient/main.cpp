@@ -10,6 +10,19 @@
 
 #include "MessageType.hpp"
 
+constexpr int usrBufSize = 64, bufSize = 256;
+
+void OnConnected();
+bool ConfirmName();
+void SendMessages();
+
+TcpSocket *sock;
+
+char username[usrBufSize];
+
+// Length accounting for the null-terminating character
+int usernameLength;
+
 int main()
 {
     WSADATA wsaData;
@@ -23,38 +36,26 @@ int main()
         return 1;
     }
 
-    TcpSocket* socket = new TcpSocket();
+    sock = new TcpSocket();
 
-    const bool res = socket->Connect(L"127.0.0.1", L"27000");
+    printf("Enter your username:\n");
+
+    fgets(username, usrBufSize, stdin);
+
+    // Overwrite the newline character
+    usernameLength = strlen(username);
+    username[usernameLength - 1] = 0;
+
+    const bool res = sock->Connect(L"127.0.0.1", L"27000");
 
     if (res)
     {
-        printf("Got connection\n");
-
-        char sendBuf[256];
-
-        sendBuf[0] = MessageType::NameOffer;
-
-        strcpy(sendBuf + 2, "Crumbler");
-
-        // Account for null-terminating character
-        int len = strlen(sendBuf + 2) + 1;
-        sendBuf[1] = len;
-
-        sendBuf[len + 2] = 0;
-
-        printf("Sending message of length: %d\n", len);
-
-        int bytesSent = socket->Send(sendBuf, len + 2);
-
-        printf("Sent %d bytes\n", bytesSent);
-
-        socket->Shutdown(SD_BOTH);
+        OnConnected();
     }
 
     getchar();
 
-    delete socket;
+    delete sock;
 
     if (WSACleanup() != 0)
     {
@@ -64,4 +65,53 @@ int main()
     }
 
     return 0;
+}
+
+void OnConnected()
+{
+    printf("Got connection\n");
+
+    if (ConfirmName())
+    {
+        SendMessages();
+    }
+
+    sock->Shutdown(SD_BOTH);
+}
+
+bool ConfirmName()
+{
+    char *buf = new char[bufSize];
+
+    buf[0] = MessageType::NameOffer;
+    buf[1] = usernameLength;
+
+    memcpy(buf + 2, username, usernameLength);
+
+    int bytesSent = sock->Send(buf, usernameLength + 2);
+
+    printf("Sent name\n", bytesSent);
+
+    // Receive name approval or disapproval
+    sock->Receive(buf, 1, 0);
+
+    MessageType res = (MessageType)buf[0];
+
+    if (res != MessageType::NameAccepted)
+    {
+        printf("The username %s is already taken\n", username);
+    }
+    else
+    {
+        printf("The username %s has been accepted\n", username);
+    }
+
+    delete[] buf;
+
+    return res == MessageType::NameAccepted;
+}
+
+void SendMessages()
+{
+
 }

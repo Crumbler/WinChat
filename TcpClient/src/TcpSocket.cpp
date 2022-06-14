@@ -72,6 +72,8 @@ int TcpSocket::Send(const char* buf, int length)
     return iResult;
 }
 
+
+
 TcpSocket* TcpSocket::Accept()
 {
     SOCKET sock = accept(this->sock, nullptr, nullptr);

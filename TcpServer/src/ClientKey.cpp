@@ -15,25 +15,38 @@ ClientKey::ClientKey(TcpSocket *socket, int bufSize)
     this->outBuf.buf = this->outBufBase;
     this->outBuf.len = bufSize;
 
-    this->ovIn = new OVERLAPPED();
-    this->ovOut = new OVERLAPPED();
-
     this->ResetInput();
 }
 
 void ClientKey::ReceiveAsync(int bytes)
 {
-    this->ovIn->hEvent = (HANDLE)IOType::Receive;
+    this->ovIn.type = IOType::Receive;
 
     this->inBuf.len = bytes;
 
     DWORD bytesReceived, flags = 0;
     int iResult = WSARecv(this->socket->getSocket(), &this->inBuf, 1,
-                          &bytesReceived, &flags, this->ovIn, nullptr);
+                          &bytesReceived, &flags, (OVERLAPPED *)&this->ovIn, nullptr);
 
     if (iResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
     {
         fprintf(stderr, "WSARecv() error:%d\n", WSAGetLastError());
+    }
+}
+
+void ClientKey::SendAsync(int bytes)
+{
+    this->ovOut.type = IOType::Send;
+
+    this->outBuf.len = bytes;
+
+    DWORD bytesSent, flags = 0;
+    int iResult = WSASend(this->socket->getSocket(), &this->outBuf, 1,
+                          &bytesSent, flags, (OVERLAPPED *)&this->ovOut, nullptr);
+
+    if (iResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+    {
+        fprintf(stderr, "WSASend() error:%d\n", WSAGetLastError());
     }
 }
 
@@ -51,9 +64,7 @@ void ClientKey::ResetInput()
 
 ClientKey::~ClientKey()
 {
-    delete this->inBufBase;
-    delete this->outBufBase;
-    delete this->ovIn;
-    delete this->ovOut;
+    delete[] this->inBufBase;
+    delete[] this->outBufBase;
     delete this->socket;
 }
