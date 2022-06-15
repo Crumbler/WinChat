@@ -24,6 +24,7 @@ struct strPtrEqual
 
 extern HANDLE cmpPort;
 extern CRITICAL_SECTION clientsSection;
+constexpr int sendBufSize = 256;
 std::unordered_map<std::string*, ClientKey*, strPtrHash, strPtrEqual> clients;
 
 void RemoveClient(ClientKey *key);
@@ -35,6 +36,8 @@ unsigned __stdcall WorkerThread(void *param)
     DWORD trBytes;
     ClientKey *pKey;
     IOOverlapped *pOv;
+
+    char *sendBuf = new char[sendBufSize];
 
     while (true)
     {
@@ -95,8 +98,6 @@ unsigned __stdcall WorkerThread(void *param)
             continue;
         }
 
-        printf("Received a %d character message:\n%s\n", msgLength, pKey->inBufBase + 2);
-
         switch (msgType)
         {
         case MessageType::NameOffer:
@@ -116,11 +117,13 @@ unsigned __stdcall WorkerThread(void *param)
                 {
                     outMsgType = MessageType::NameAccepted;
                     pKey->username = username;
+                    printf("Accepted client with name %s\n", username->data());
                 }
                 else
                 {
                     // A user with the same username already exists
                     outMsgType = MessageType::NameTaken;
+                    printf("Rejected client with name %s\n", username->data());
                     delete username;
                 }
 
@@ -133,6 +136,33 @@ unsigned __stdcall WorkerThread(void *param)
             break;
 
         case MessageType::ClientMessage:
+            sendBuf[0] = MessageType::ServerEcho;
+            // Account for null-terminating character
+            const int usernameLength = pKey->username->size() + 1;
+            sendBuf[1] = usernameLength;
+            sendBuf[2] = msgLength;
+
+            const char *username = pKey->username->data(),
+                *message = pKey->inBufBase + 2;
+
+            printf("%s: %s\n", username, message);
+
+            memcpy(sendBuf + 3, username, usernameLength);
+            memcpy(sendBuf + 3 + usernameLength, message, msgLength);
+
+            const int totalLength = 3 + usernameLength + msgLength;
+
+            EnterCriticalSection(&clientsSection);
+
+            for (auto entry : clients)
+            {
+                ClientKey *key = entry.second;
+
+                memcpy(key->outBufBase, sendBuf, totalLength);
+                key->SendAsync(totalLength);
+            }
+
+            LeaveCriticalSection(&clientsSection);
 
             break;
         }
@@ -141,6 +171,8 @@ unsigned __stdcall WorkerThread(void *param)
         pKey->bytesExpected = 2;
         pKey->ReceiveAsync(2);
     }
+
+    delete[] sendBuf;
 }
 
 // Remove a client after disconnection

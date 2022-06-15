@@ -66,13 +66,10 @@ int TcpSocket::Send(const char* buf, int length)
     if (iResult == SOCKET_ERROR)
     {
         fprintf(stderr, "Error at send(): %d\n", WSAGetLastError());
-        return -1;
     }
 
     return iResult;
 }
-
-
 
 TcpSocket* TcpSocket::Accept()
 {
@@ -97,7 +94,13 @@ void TcpSocket::Shutdown(int how)
 
 int TcpSocket::Receive(char* buf, int length, int flags)
 {
-    return recv(this->sock, buf, length, flags);
+    int iResult = recv(this->sock, buf, length, flags);
+    if (iResult == SOCKET_ERROR)
+    {
+        fprintf(stderr, "Error at recv(): %d\n", WSAGetLastError());
+    }
+
+    return iResult;
 }
 
 bool TcpSocket::Connect(const wchar_t* addr, const wchar_t* port)

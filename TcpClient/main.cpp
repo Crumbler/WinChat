@@ -15,6 +15,8 @@ constexpr int usrBufSize = 64, bufSize = 256;
 void OnConnected();
 bool ConfirmName();
 void SendMessages();
+void ReceiveMessages();
+unsigned ReceiveThread(void *param);
 
 TcpSocket *sock;
 
@@ -73,6 +75,7 @@ void OnConnected()
 
     if (ConfirmName())
     {
+        ReceiveMessages();
         SendMessages();
     }
 
@@ -129,7 +132,62 @@ void SendMessages()
 
         buf[1] = len;
 
-        sock->Send(buf, len + 2);
+        int iResult = sock->Send(buf, len + 2);
+        if (iResult == SOCKET_ERROR)
+        {
+            break;
+        }
+    }
+
+    delete[] buf;
+}
+
+void ReceiveMessages()
+{
+    _beginthreadex(nullptr, 0, ReceiveThread, nullptr, 0, nullptr);
+}
+
+unsigned ReceiveThread(void *param)
+{
+    printf("Receive thread started\n");
+
+    char *buf = new char[bufSize], *bufPos;
+
+    while (true)
+    {
+        bufPos = buf;
+        // Message type + 2 length = 3 bytes
+        int leftToReceive = 3;
+
+        while (leftToReceive > 0)
+        {
+            int iResult = sock->Receive(bufPos, leftToReceive, 0);
+            if (iResult == SOCKET_ERROR)
+            {
+                return 0;
+            }
+
+            bufPos += iResult;
+            leftToReceive -= iResult;
+        }
+
+        int lengthName = (unsigned char)buf[1],
+            lengthMsg = (unsigned char)buf[2];
+
+        leftToReceive = lengthName + lengthMsg;
+        while (leftToReceive > 0)
+        {
+            int iResult = sock->Receive(bufPos, leftToReceive, 0);
+            if (iResult == SOCKET_ERROR)
+            {
+                return 0;
+            }
+
+            bufPos += iResult;
+            leftToReceive -= iResult;
+        }
+
+        printf("Received message:\n%s: %s\n", buf + 3, buf + 3 + lengthName);
     }
 
     delete[] buf;
