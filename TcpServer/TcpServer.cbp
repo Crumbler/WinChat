@@ -38,11 +38,15 @@
 			<Add library="ws2_32" />
 		</Linker>
 		<Unit filename="include/ClientKey.hpp" />
+		<Unit filename="include/IOOverlapped.hpp" />
+		<Unit filename="include/IOType.hpp" />
 		<Unit filename="include/MessageType.hpp" />
 		<Unit filename="include/TcpSocket.hpp" />
+		<Unit filename="include/WorkerThread.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/ClientKey.cpp" />
 		<Unit filename="src/TcpSocket.cpp" />
+		<Unit filename="src/WorkerThread.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

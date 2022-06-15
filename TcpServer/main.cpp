@@ -12,9 +12,12 @@
 #include "IOType.hpp"
 #include "IOOverlapped.hpp"
 
-constexpr int socketBufSize = 256;
+constexpr int socketBufSize = 256,
+    listenQueueSize = 10;
+constexpr wchar_t serverPort[] = L"27000";
 
 HANDLE cmpPort;
+CRITICAL_SECTION clientsSection;
 
 unsigned WorkerThread(void *param);
 
@@ -29,6 +32,7 @@ int main()
 
     constexpr WORD wVersionRequested = MAKEWORD(2, 2);
 
+    // No console output buffering
     setbuf(stderr, nullptr);
     setbuf(stdout, nullptr);
 
@@ -38,6 +42,9 @@ int main()
         fprintf(stderr, "WSAStartup failed: %d\n", iResult);
         return 1;
     }
+
+    constexpr int spinCount = 4000;
+    InitializeCriticalSectionAndSpinCount(&clientsSection, spinCount);
 
     cmpPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE,
                                      nullptr, 0, threadCount);
@@ -49,8 +56,8 @@ int main()
 
     TcpSocket* listenSocket = new TcpSocket();
 
-    listenSocket->Bind(nullptr, L"27000");
-    listenSocket->Listen(10);
+    listenSocket->Bind(nullptr, serverPort);
+    listenSocket->Listen(listenQueueSize);
 
     // Keep accepting connections
     while (true)
@@ -66,6 +73,8 @@ int main()
         if (hRes == nullptr)
         {
             fprintf(stderr, "Addition to port failed:%lu\n", GetLastError());
+            delete key;
+            continue;
         }
 
         key->bytesExpected = 2;
@@ -75,6 +84,8 @@ int main()
     delete listenSocket;
 
     CloseHandle(cmpPort);
+
+    DeleteCriticalSection(&clientsSection);
 
     if (WSACleanup() != 0)
     {

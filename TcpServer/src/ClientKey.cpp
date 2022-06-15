@@ -18,6 +18,9 @@ ClientKey::ClientKey(TcpSocket *socket, int bufSize)
     this->ovIn.ov.hEvent = nullptr;
     this->ovOut.ov.hEvent = nullptr;
 
+    this->username = nullptr;
+    this->lastOutMsgType = MessageType::ServerEcho;
+
     this->ResetInput();
 }
 
@@ -70,4 +73,9 @@ ClientKey::~ClientKey()
     delete[] this->inBufBase;
     delete[] this->outBufBase;
     delete this->socket;
+
+    if (this->username != nullptr)
+    {
+        delete this->username;
+    }
 }

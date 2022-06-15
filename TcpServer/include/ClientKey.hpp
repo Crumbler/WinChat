@@ -1,9 +1,12 @@
 #pragma once
 
+#include <string>
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "TcpSocket.hpp"
 #include "IOOverlapped.hpp"
+#include "MessageType.hpp"
 
 struct ClientKey
 {
@@ -11,6 +14,9 @@ struct ClientKey
     WSABUF inBuf, outBuf;
     char *inBufBase, *outBufBase;
     IOOverlapped ovIn, ovOut;
+
+    std::string *username;
+    MessageType lastOutMsgType;
 
     int bytesExpected, bytesReceived;
 
