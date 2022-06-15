@@ -82,7 +82,7 @@ unsigned __stdcall WorkerThread(void *param)
         }
 
         int msgType = pKey->inBufBase[0];
-        int msgLength = pKey->inBufBase[1];
+        int msgLength = (unsigned char)pKey->inBufBase[1];
 
         // If message type and length have been received
         if (pKey->bytesReceived == 2)
