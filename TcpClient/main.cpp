@@ -1,31 +1,18 @@
 
 #include <cstdio>
+#include "windowFuncs.hpp"
+#include <windows.h>
+#include <gdiplus.h>
+#include <commctrl.h>
 
-#include <stdexcept>
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
+constexpr wchar_t szClassName[] = L"TcpClient";
 
-#include "TcpSocket.hpp"
+HINSTANCE hInstanceMain;
 
-#include "MessageType.hpp"
-
-constexpr int usrBufSize = 64, bufSize = 256;
-
-void OnConnected();
-bool ConfirmName();
-void SendMessages();
-void ReceiveMessages();
-unsigned ReceiveThread(void *param);
-
-TcpSocket *sock;
-
-char username[usrBufSize];
-
-// Length accounting for the null-terminating character
-int usernameLength;
-
-int main()
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpszArgument, int nCmdShow)
 {
     WSADATA wsaData;
 
@@ -38,26 +25,71 @@ int main()
         return 1;
     }
 
-    sock = new TcpSocket();
+    INITCOMMONCONTROLSEX initCtrls;
 
-    printf("Enter your username:\n");
+    initCtrls.dwSize = sizeof(initCtrls);
+    initCtrls.dwICC = ICC_UPDOWN_CLASS;
 
-    fgets(username, usrBufSize, stdin);
+    InitCommonControlsEx(&initCtrls);
 
-    // Overwrite the newline character
-    usernameLength = strlen(username);
-    username[usernameLength - 1] = 0;
+    using Gdiplus::GdiplusStartupInput;
+    using Gdiplus::GdiplusShutdown;
 
-    const bool res = sock->Connect(L"127.0.0.1", L"27000");
+    HWND hwnd;
+    WNDCLASSEXW wincl;
 
-    if (res)
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR           gdiplusToken;
+
+    hInstanceMain = hInstance;
+
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
+
+    wincl.hInstance = hInstance;
+    wincl.lpszClassName = szClassName;
+    wincl.lpfnWndProc = WndProc;
+    wincl.style = CS_DBLCLKS;
+    wincl.cbSize = sizeof(WNDCLASSEX);
+    wincl.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+    wincl.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
+    wincl.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wincl.lpszMenuName = nullptr;
+    wincl.cbClsExtra = 0;
+    wincl.cbWndExtra = 0;
+
+    wincl.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+
+    if (!RegisterClassExW(&wincl))
     {
-        OnConnected();
+        return 0;
     }
 
-    getchar();
+    hwnd = CreateWindowExW(
+           0,
+           szClassName,
+           szClassName,
+           WS_OVERLAPPEDWINDOW & ~(CS_VREDRAW | CS_HREDRAW),
+           CW_USEDEFAULT,
+           CW_USEDEFAULT,
+           1280,
+           720,
+           HWND_DESKTOP,
+           nullptr,
+           hInstance,
+           nullptr);
 
-    delete sock;
+    ShowWindow(hwnd, nCmdShow);
+    UpdateWindow(hwnd);
+
+    MSG msg;
+
+    while (GetMessage(&msg, nullptr, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    GdiplusShutdown(gdiplusToken);
 
     if (WSACleanup() != 0)
     {
@@ -66,129 +98,43 @@ int main()
         return 1;
     }
 
+    return msg.wParam;
+}
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_CREATE:
+        OnCreate(hwnd, hInstanceMain);
+        break;
+
+    case WM_ERASEBKGND:
+        return 1;
+
+    case WM_SIZE:
+        OnResize(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
+        break;
+
+    case WM_EXITSIZEMOVE:
+        OnExitSizeMove(hwnd);
+        break;
+
+    case WM_PAINT:
+        OnPaint(hwnd);
+        break;
+
+    case WM_COMMAND:
+        OnCommand(hwnd, wParam, lParam);
+        break;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+
+    default:
+        return DefWindowProcW(hwnd, message, wParam, lParam);
+    }
+
     return 0;
-}
-
-void OnConnected()
-{
-    printf("Got connection\n");
-
-    if (ConfirmName())
-    {
-        ReceiveMessages();
-        SendMessages();
-    }
-
-    sock->Shutdown(SD_BOTH);
-}
-
-bool ConfirmName()
-{
-    char *buf = new char[bufSize];
-
-    buf[0] = MessageType::NameOffer;
-    buf[1] = usernameLength;
-
-    memcpy(buf + 2, username, usernameLength);
-
-    sock->Send(buf, usernameLength + 2);
-
-    printf("Sent name\n");
-
-    // Receive name approval or disapproval
-    sock->Receive(buf, 1, 0);
-
-    MessageType res = (MessageType)buf[0];
-
-    if (res != MessageType::NameAccepted)
-    {
-        printf("The username %s is already taken\n", username);
-    }
-    else
-    {
-        printf("The username %s has been accepted\n", username);
-    }
-
-    delete[] buf;
-
-    return res == MessageType::NameAccepted;
-}
-
-void SendMessages()
-{
-    char *buf = new char[bufSize];
-
-    buf[0] = MessageType::ClientMessage;
-
-    printf("Enter messages:\n");
-
-    while (true)
-    {
-        fgets(buf + 2, bufSize - 2, stdin);
-
-        // Overwrite the newline character
-        int len = strlen(buf + 2);
-        buf[len + 2 - 1] = 0;
-
-        buf[1] = len;
-
-        int iResult = sock->Send(buf, len + 2);
-        if (iResult == SOCKET_ERROR)
-        {
-            break;
-        }
-    }
-
-    delete[] buf;
-}
-
-void ReceiveMessages()
-{
-    _beginthreadex(nullptr, 0, ReceiveThread, nullptr, 0, nullptr);
-}
-
-unsigned ReceiveThread(void *param)
-{
-    printf("Receive thread started\n");
-
-    char *buf = new char[bufSize], *bufPos;
-
-    while (true)
-    {
-        bufPos = buf;
-        // Message type + 2 length = 3 bytes
-        int leftToReceive = 3;
-
-        while (leftToReceive > 0)
-        {
-            int iResult = sock->Receive(bufPos, leftToReceive, 0);
-            if (iResult == SOCKET_ERROR)
-            {
-                return 0;
-            }
-
-            bufPos += iResult;
-            leftToReceive -= iResult;
-        }
-
-        int lengthName = (unsigned char)buf[1],
-            lengthMsg = (unsigned char)buf[2];
-
-        leftToReceive = lengthName + lengthMsg;
-        while (leftToReceive > 0)
-        {
-            int iResult = sock->Receive(bufPos, leftToReceive, 0);
-            if (iResult == SOCKET_ERROR)
-            {
-                return 0;
-            }
-
-            bufPos += iResult;
-            leftToReceive -= iResult;
-        }
-
-        printf("Received message:\n%s: %s\n", buf + 3, buf + 3 + lengthName);
-    }
-
-    delete[] buf;
 }
