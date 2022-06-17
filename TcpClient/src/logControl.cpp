@@ -20,7 +20,7 @@ void RegisterLogControl(HINSTANCE hInstance)
     wincl.lpszMenuName = nullptr;
     wincl.cbClsExtra = 0;
     wincl.cbWndExtra = 0;
-    wincl.hbrBackground = nullptr;
+    wincl.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 
     RegisterClassExW(&wincl);
 }
@@ -45,8 +45,12 @@ LRESULT CALLBACK LogWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         OnLogPaint(hwnd);
         break;
 
+    case WM_VSCROLL:
+        OnLogVScroll(hwnd, wParam);
+        break;
+
     case WM_LOGADD:
-        OnLogAdd(hwnd);
+        OnLogAdd(hwnd, (const char*)wParam);
         break;
 
     case WM_LOGCLEAR:

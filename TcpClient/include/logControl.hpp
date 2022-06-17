@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <gdiplus.h>
 
 constexpr wchar_t szLogControl[] = L"LogControl";
 
@@ -13,6 +14,9 @@ void RegisterLogControl(HINSTANCE hInstance);
 
 struct LogControlExtra
 {
-    int width, height;
-    std::vector<std::string> lines;
+    int width, height, textHeight, scrollPos;
+    Gdiplus::Font* fontMain;
+    Gdiplus::StringFormat* strfrmMain;
+    std::vector<std::wstring> lines;
+    std::vector<float> lineHeights;
 };

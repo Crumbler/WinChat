@@ -88,9 +88,19 @@ void OnCreate(HWND hwnd, HINSTANCE hInstance)
                              (HMENU)idEditMsg, hInstance, nullptr);
 
     hLog = CreateWindowW(szLogControl, nullptr,
-                         WS_CHILD | WS_VISIBLE,
+                         WS_CHILD | WS_VISIBLE | WS_VSCROLL,
                          0, 0, 0, 0, hwnd,
                          (HMENU)idLog, hInstance, nullptr);
+
+    char arr[] = "   Test message";
+
+    for (int i = 0; i < 30; ++i)
+    {
+        arr[0] = '0' + i / 10;
+        arr[1] = '0' + i % 10;
+
+        SendMessage(hLog, WM_LOGADD, (WPARAM)arr, 0);
+    }
 }
 
 void OnResize(HWND hwnd, int resizeType, int newWidth, int newHeight)
@@ -186,7 +196,7 @@ void OnDisconnect()
 
 void OnClear()
 {
-
+    SendMessage(hLog, WM_LOGCLEAR, 0, 0);
 }
 
 void OnSend()
