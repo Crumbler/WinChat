@@ -9,6 +9,9 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 constexpr wchar_t szClassName[] = L"TcpClient";
 
+constexpr int initialWidth = 1280,
+    initialHeight = 720;
+
 HINSTANCE hInstanceMain;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -48,7 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wincl.hInstance = hInstance;
     wincl.lpszClassName = szClassName;
     wincl.lpfnWndProc = WndProc;
-    wincl.style = CS_DBLCLKS;
+    wincl.style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;
     wincl.cbSize = sizeof(WNDCLASSEX);
     wincl.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
     wincl.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
@@ -68,11 +71,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
            0,
            szClassName,
            szClassName,
-           WS_OVERLAPPEDWINDOW & ~(CS_VREDRAW | CS_HREDRAW),
+           WS_OVERLAPPEDWINDOW,
            CW_USEDEFAULT,
            CW_USEDEFAULT,
-           1280,
-           720,
+           initialWidth,
+           initialHeight,
            HWND_DESKTOP,
            nullptr,
            hInstance,
@@ -114,10 +117,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     case WM_SIZE:
         OnResize(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
-        break;
-
-    case WM_EXITSIZEMOVE:
-        OnExitSizeMove(hwnd);
         break;
 
     case WM_PAINT:

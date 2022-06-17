@@ -19,7 +19,7 @@
 			<Target title="Release">
 				<Option output="bin/Release/TcpClient" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
-				<Option type="1" />
+				<Option type="0" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
@@ -43,11 +43,18 @@
 			<Add option="-static" />
 			<Add option="-m64" />
 			<Add library="ws2_32" />
+			<Add library="kernel32" />
+			<Add library="user32" />
+			<Add library="gdi32" />
+			<Add library="comctl32" />
+			<Add library="gdiplus" />
 		</Linker>
 		<Unit filename="include/MessageType.hpp" />
 		<Unit filename="include/TcpSocket.hpp" />
+		<Unit filename="include/windowFuncs.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/TcpSocket.cpp" />
+		<Unit filename="src/windowFuncs.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
