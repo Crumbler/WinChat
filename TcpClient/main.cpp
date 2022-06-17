@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <commctrl.h>
+#include "logControl.hpp"
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -67,6 +68,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 0;
     }
 
+    RegisterLogControl(hInstance);
+
     hwnd = CreateWindowExW(
            0,
            szClassName,
@@ -111,9 +114,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         OnCreate(hwnd, hInstanceMain);
         break;
-
-    case WM_ERASEBKGND:
-        return 1;
 
     case WM_SIZE:
         OnResize(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));

@@ -4,26 +4,31 @@
 
 #include <gdiplus.h>
 
+#include "logControl.hpp"
+
 using namespace Gdiplus;
 
 constexpr int idLabel1 = 0,
     idBtnConnect = 1, idBtnDisconnect = 2,
     idBtnClear = 3, idEditAddress = 4, idEditPort = 5,
     idEditUsername = 6, idBtnSend = 7, idEditMsg = 8,
-    idLabel2 = 9, idLabel3 = 10;
+    idLabel2 = 9, idLabel3 = 10, idLog = 11;
 
-constexpr int panelWidth = 200,
+constexpr int panelWidth = 140,
     bottomPanelHeight = 50,
     padding = 10,
     sendBtnWidth = 60;
 
-int clientWidth,
-    clientHeight;
+int clientWidth, clientHeight;
 
 HWND hSendButton, hEditMsg, hEditAddress,
-    hEditPort, hEditUsername;
+    hEditPort, hEditUsername, hLog;
 
 void CalculateControlPositions();
+void OnConnect();
+void OnDisconnect();
+void OnClear();
+void OnSend();
 
 void OnCreate(HWND hwnd, HINSTANCE hInstance)
 {
@@ -81,6 +86,11 @@ void OnCreate(HWND hwnd, HINSTANCE hInstance)
                              WS_CHILD | WS_VISIBLE,
                              0, 0, 0, 0, hwnd,
                              (HMENU)idEditMsg, hInstance, nullptr);
+
+    hLog = CreateWindowW(szLogControl, nullptr,
+                         WS_CHILD | WS_VISIBLE,
+                         0, 0, 0, 0, hwnd,
+                         (HMENU)idLog, hInstance, nullptr);
 }
 
 void OnResize(HWND hwnd, int resizeType, int newWidth, int newHeight)
@@ -99,6 +109,9 @@ void CalculateControlPositions()
     flags = SWP_NOZORDER;
     SetWindowPos(hEditMsg, nullptr, sendBtnWidth + padding * 2, clientHeight - bottomPanelHeight + padding,
                  clientWidth - sendBtnWidth - padding * 3, bottomPanelHeight - padding * 2, flags);
+
+    SetWindowPos(hLog, nullptr, panelWidth, 0, clientWidth - panelWidth,
+                 clientHeight - bottomPanelHeight, flags);
 }
 
 void OnPaint(HWND hwnd)
@@ -108,8 +121,6 @@ void OnPaint(HWND hwnd)
     HDC hdc = BeginPaint(hwnd, &ps);
 
     Graphics graphics(hdc);
-
-    graphics.Clear(Color::White);
 
     SolidBrush brush(Color(240, 240, 240));
 
@@ -130,6 +141,55 @@ void OnCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 void OnControl(HWND hwnd, HWND hwndControl, int idNotify, int idControl)
+{
+    switch (idControl)
+    {
+    case idBtnConnect:
+        if (idNotify == BN_CLICKED)
+        {
+            OnConnect();
+        }
+        break;
+
+    case idBtnDisconnect:
+        if (idNotify == BN_CLICKED)
+        {
+            OnDisconnect();
+        }
+        break;
+
+    case idBtnClear:
+        if (idNotify == BN_CLICKED)
+        {
+            OnClear();
+        }
+        break;
+
+    case idBtnSend:
+        if (idNotify == BN_CLICKED)
+        {
+            OnSend();
+        }
+        break;
+    }
+}
+
+void OnConnect()
+{
+
+}
+
+void OnDisconnect()
+{
+
+}
+
+void OnClear()
+{
+
+}
+
+void OnSend()
 {
 
 }
