@@ -47,8 +47,16 @@ unsigned __stdcall WorkerThread(void *param)
 
         if (iResult == 0)
         {
-            fprintf(stderr, "Client disconnected with error: %lu\n", GetLastError());
-            RemoveClient(pKey);
+            const DWORD errorCode = GetLastError();
+            fprintf(stderr, "Client disconnected with error: %lu\n", errorCode);
+
+            // This error code indicates that the socket has been closed
+            // and the ClientKey already disposed of
+            if (errorCode != WSA_OPERATION_ABORTED)
+            {
+                RemoveClient(pKey);
+            }
+
             continue;
         }
         else if (iResult != 0 && trBytes == 0)
@@ -66,6 +74,7 @@ unsigned __stdcall WorkerThread(void *param)
             if (pKey->lastOutMsgType == MessageType::NameTaken)
             {
                 pKey->socket->Shutdown(SD_BOTH);
+                RemoveClient(pKey);
             }
 
             continue;
