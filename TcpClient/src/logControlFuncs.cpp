@@ -71,9 +71,10 @@ void ScrollToBottom(HWND hwnd)
     GetScrollInfo(hwnd, SB_VERT, &si);
 
     si.fMask = SIF_POS;
-    logCtrl->scrollPos = si.nMax;
     si.nPos = si.nMax;
     SetScrollInfo(hwnd, SB_VERT, &si, false);
+    GetScrollInfo(hwnd, SB_VERT, &si);
+    logCtrl->scrollPos = si.nPos;
 }
 
 void OnLogCreate(HWND hwnd)

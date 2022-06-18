@@ -127,6 +127,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         OnCommand(hwnd, wParam, lParam);
         break;
 
+    case WM_DISCONNECTED:
+        OnDisconnect();
+        break;
+
+    case WM_ADDTOLOG:
+        OnAddToLog((char *)wParam);
+        break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

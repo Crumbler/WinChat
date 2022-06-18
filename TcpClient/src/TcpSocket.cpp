@@ -60,6 +60,20 @@ void TcpSocket::Listen(int backlog)
     }
 }
 
+void TcpSocket::ReCreate()
+{
+    if (this->sock != INVALID_SOCKET)
+    {
+        closesocket(this->sock);
+    }
+
+    this->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (this->sock == INVALID_SOCKET)
+    {
+        fprintf(stderr, "Error at recreating socket(): %d\n", WSAGetLastError());
+    }
+}
+
 int TcpSocket::Send(const char* buf, int length)
 {
     int iResult = send(this->sock, buf, length, 0);
@@ -103,9 +117,9 @@ int TcpSocket::Receive(char* buf, int length, int flags)
     return iResult;
 }
 
-bool TcpSocket::Connect(const wchar_t* addr, const wchar_t* port)
+int TcpSocket::Connect(const char *addr, const char *port)
 {
-    ADDRINFOW hints, *result;
+    ADDRINFOA hints, *result;
 
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -113,20 +127,20 @@ bool TcpSocket::Connect(const wchar_t* addr, const wchar_t* port)
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
-    int iResult = GetAddrInfoW(addr, port, &hints, &result);
+    int iResult = GetAddrInfoA(addr, port, &hints, &result);
     if (iResult != 0)
     {
-        fprintf(stderr, "getaddrinfo failed: %d\n", iResult);
-        return false;
+        printf("getaddr failed\n");
+        return WSAGetLastError();
     }
 
     iResult = connect(this->sock, result->ai_addr, result->ai_addrlen);
     if (iResult == SOCKET_ERROR)
     {
-        fprintf(stderr, "Error at connect(): %d\n", WSAGetLastError());
+        iResult = WSAGetLastError();
     }
 
-    FreeAddrInfoW(result);
+    FreeAddrInfoA(result);
 
-    return iResult == 0;
+    return iResult;
 }

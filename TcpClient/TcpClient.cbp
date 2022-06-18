@@ -51,9 +51,13 @@
 		</Linker>
 		<Unit filename="include/MessageType.hpp" />
 		<Unit filename="include/TcpSocket.hpp" />
+		<Unit filename="include/logControl.hpp" />
+		<Unit filename="include/logControlFuncs.hpp" />
 		<Unit filename="include/windowFuncs.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/TcpSocket.cpp" />
+		<Unit filename="src/logControl.cpp" />
+		<Unit filename="src/logControlFuncs.cpp" />
 		<Unit filename="src/windowFuncs.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />

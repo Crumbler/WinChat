@@ -12,11 +12,12 @@ class TcpSocket
 
         void Bind(const wchar_t *addr, const wchar_t *port);
         void Listen(int backlog);
+        void ReCreate();
         int Send(const char *buf, int length);
         TcpSocket* Accept();
         void Shutdown(int how);
         int Receive(char *buf, int length, int flags);
-        bool Connect(const wchar_t *addr, const wchar_t *port);
+        int Connect(const char *addr, const char *port);
 
     protected:
 
