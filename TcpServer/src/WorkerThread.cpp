@@ -31,7 +31,7 @@ void RemoveClient(ClientKey *key);
 
 unsigned __stdcall WorkerThread(void *param)
 {
-    printf("Thread started\n");
+    printf("Worker thread started\n");
 
     DWORD trBytes;
     ClientKey *pKey;

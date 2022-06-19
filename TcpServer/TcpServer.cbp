@@ -48,10 +48,12 @@
 		<Unit filename="include/IOOverlapped.hpp" />
 		<Unit filename="include/IOType.hpp" />
 		<Unit filename="include/MessageType.hpp" />
+		<Unit filename="include/PipeThread.hpp" />
 		<Unit filename="include/TcpSocket.hpp" />
 		<Unit filename="include/WorkerThread.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/ClientKey.cpp" />
+		<Unit filename="src/PipeThread.cpp" />
 		<Unit filename="src/TcpSocket.cpp" />
 		<Unit filename="src/WorkerThread.cpp" />
 		<Extensions>

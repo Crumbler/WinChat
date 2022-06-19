@@ -8,6 +8,8 @@
 
 #include "ClientKey.hpp"
 #include "TcpSocket.hpp"
+#include "WorkerThread.hpp"
+#include "PipeThread.hpp"
 #include "MessageType.hpp"
 #include "IOType.hpp"
 #include "IOOverlapped.hpp"
@@ -18,8 +20,6 @@ constexpr wchar_t serverPort[] = L"27000";
 
 HANDLE cmpPort;
 CRITICAL_SECTION clientsSection;
-
-unsigned WorkerThread(void *param);
 
 int main()
 {
@@ -53,6 +53,8 @@ int main()
     {
         _beginthreadex(nullptr, 0, WorkerThread, nullptr, 0, nullptr);
     }
+
+    _beginthreadex(nullptr, 0, PipeThread, nullptr, 0, nullptr);
 
     TcpSocket* listenSocket = new TcpSocket();
 
