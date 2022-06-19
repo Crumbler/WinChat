@@ -46,7 +46,6 @@
 			<Add library="kernel32" />
 			<Add library="user32" />
 			<Add library="gdi32" />
-			<Add library="comctl32" />
 			<Add library="gdiplus" />
 		</Linker>
 		<Unit filename="include/MessageType.hpp" />
