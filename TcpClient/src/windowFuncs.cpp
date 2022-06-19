@@ -364,6 +364,7 @@ unsigned __stdcall ListenThread(void *param)
         // Disposed upon processing the message WM_ADDTOLOG
         char *buf2 = new char[bufSize];
 
+        // If the current user is the sender, replace the username
         if (strcmp(currUsername, buf + 3) == 0)
         {
             strcpy(buf + 3, "me");

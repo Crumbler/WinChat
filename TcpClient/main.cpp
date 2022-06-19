@@ -29,13 +29,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 1;
     }
 
-    INITCOMMONCONTROLSEX initCtrls;
-
-    initCtrls.dwSize = sizeof(initCtrls);
-    initCtrls.dwICC = ICC_UPDOWN_CLASS;
-
-    InitCommonControlsEx(&initCtrls);
-
     using Gdiplus::GdiplusStartupInput;
     using Gdiplus::GdiplusShutdown;
 
