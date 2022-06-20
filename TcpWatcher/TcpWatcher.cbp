@@ -13,15 +13,17 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/TcpWatcher" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
-				<Option type="1" />
+				<Option type="0" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -40,8 +42,18 @@
 			<Add option="-static-libgcc" />
 			<Add option="-static" />
 			<Add option="-m64" />
+			<Add library="kernel32" />
+			<Add library="user32" />
+			<Add library="gdi32" />
+			<Add library="gdiplus" />
 		</Linker>
+		<Unit filename="include/logControl.hpp" />
+		<Unit filename="include/logControlFuncs.hpp" />
+		<Unit filename="include/windowFuncs.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="src/logControl.cpp" />
+		<Unit filename="src/logControlFuncs.cpp" />
+		<Unit filename="src/windowFuncs.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
