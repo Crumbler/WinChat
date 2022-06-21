@@ -16,7 +16,7 @@ ClientKey::ClientKey(TcpSocket *socket, int bufSize)
     this->outBuf.len = bufSize;
 
     ZeroMemory(&this->ovIn.ov, sizeof(this->ovIn.ov));
-    ZeroMemory(&this->ovIn.ov, sizeof(this->ovIn.ov));
+    ZeroMemory(&this->ovOut.ov, sizeof(this->ovOut.ov));
 
     this->username = nullptr;
     this->lastOutMsgType = MessageType::ServerEcho;
