@@ -2,6 +2,8 @@
 
 #include <cstdio>
 
+#include <Mswsock.h>
+
 TcpSocket::TcpSocket()
 {
     this->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -90,3 +92,10 @@ SOCKET TcpSocket::getSocket()
 {
     return this->sock;
 }
+
+void TcpSocket::ShareProperties(TcpSocket& s)
+{
+    setsockopt(s.getSocket(), SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT,
+               (char *)&this->sock, sizeof(this->sock));
+}
+

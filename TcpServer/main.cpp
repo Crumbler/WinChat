@@ -1,100 +1,124 @@
 
 #include <cstdio>
-
 #include <stdexcept>
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
-#include "ClientKey.hpp"
 #include "TcpSocket.hpp"
-#include "WorkerThread.hpp"
-#include "PipeThread.hpp"
-#include "MessageType.hpp"
-#include "IOType.hpp"
-#include "IOOverlapped.hpp"
+#include "MainThread.hpp"
+#include <windows.h>
 
-constexpr int socketBufSize = 256,
-    listenQueueSize = 10;
-constexpr wchar_t serverPort[] = L"27000";
+SERVICE_STATUS serviceStatus;
+SERVICE_STATUS_HANDLE statusHandle = nullptr;
 
-HANDLE cmpPort;
-CRITICAL_SECTION clientsSection;
+HANDLE hMainThread;
+
+void WINAPI ServiceMain(DWORD argc, char *argv);
+void WINAPI ServiceCtrlHandler(DWORD);
+
+WSADATA wsaData;
+char serviceName[] = "Chat server";
+
+bool Startup();
+void Cleanup();
 
 int main()
 {
-    WSADATA wsaData;
-    SYSTEM_INFO systemInfo;
+    SERVICE_TABLE_ENTRYA ServiceTable[] =
+    {
+        { serviceName, (LPSERVICE_MAIN_FUNCTION)ServiceMain },
+        { nullptr, nullptr }
+    };
 
-    GetSystemInfo(&systemInfo);
+    if (!StartServiceCtrlDispatcher(ServiceTable))
+    {
+        return GetLastError();
+    }
 
-    const int threadCount = systemInfo.dwNumberOfProcessors * 2;
+    return 0;
+}
 
+void WINAPI ServiceMain(DWORD argc, char *argv)
+{
+    statusHandle = RegisterServiceCtrlHandlerA(serviceName, ServiceCtrlHandler);
+
+    if (statusHandle == nullptr)
+    {
+        return;
+    }
+
+    ZeroMemory(&serviceStatus, sizeof(serviceStatus));
+
+    serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+    serviceStatus.dwCurrentState = SERVICE_START_PENDING;
+    SetServiceStatus(statusHandle, &serviceStatus);
+
+    if (!Startup())
+    {
+        return;
+    }
+
+    serviceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+    serviceStatus.dwCurrentState = SERVICE_RUNNING;
+    SetServiceStatus(statusHandle, &serviceStatus);
+
+    hMainThread = (HANDLE)_beginthreadex(nullptr, 0, MainThread, nullptr, 0, nullptr);
+
+    WaitForSingleObject(hMainThread, INFINITE);
+    CloseHandle(hMainThread);
+
+    Cleanup();
+
+    serviceStatus.dwControlsAccepted = 0;
+    serviceStatus.dwCurrentState = SERVICE_STOPPED;
+    SetServiceStatus (statusHandle, &serviceStatus);
+}
+
+bool Startup()
+{
     constexpr WORD wVersionRequested = MAKEWORD(2, 2);
 
-    // No console output buffering
     setbuf(stderr, nullptr);
     setbuf(stdout, nullptr);
 
     int iResult = WSAStartup(wVersionRequested, &wsaData);
     if (iResult != 0)
     {
-        fprintf(stderr, "WSAStartup failed: %d\n", iResult);
-        return 1;
+        serviceStatus.dwCurrentState = SERVICE_STOPPED;
+        serviceStatus.dwWin32ExitCode = iResult;
+        SetServiceStatus(statusHandle, &serviceStatus);
+        return false;
     }
 
-    constexpr int spinCount = 4000;
-    InitializeCriticalSectionAndSpinCount(&clientsSection, spinCount);
+    return true;
+}
 
-    cmpPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE,
-                                     nullptr, 0, threadCount);
-
-    for (int i = 0; i < threadCount; ++i)
-    {
-        _beginthreadex(nullptr, 0, WorkerThread, nullptr, 0, nullptr);
-    }
-
-    _beginthreadex(nullptr, 0, PipeThread, nullptr, 0, nullptr);
-
-    TcpSocket* listenSocket = new TcpSocket();
-
-    listenSocket->Bind(nullptr, serverPort);
-    listenSocket->Listen(listenQueueSize);
-
-    // Keep accepting connections
-    while (true)
-    {
-        TcpSocket *clientSocket = listenSocket->Accept();
-        printf("Got connection\n");
-
-        ClientKey *key = new ClientKey(clientSocket, socketBufSize);
-
-        HANDLE hRes = CreateIoCompletionPort((HANDLE)clientSocket->getSocket(),
-            cmpPort, (ULONG_PTR)key, 0);
-
-        if (hRes == nullptr)
-        {
-            fprintf(stderr, "Addition to port failed:%lu\n", GetLastError());
-            delete key;
-            continue;
-        }
-
-        key->bytesExpected = 2;
-        key->ReceiveAsync(2);
-    }
-
-    delete listenSocket;
-
-    CloseHandle(cmpPort);
-
-    DeleteCriticalSection(&clientsSection);
-
+void Cleanup()
+{
     if (WSACleanup() != 0)
     {
-        iResult = WSAGetLastError();
-        fprintf(stderr,"WSACleanup failed: %d\n", iResult);
-        return 1;
+        serviceStatus.dwCurrentState = SERVICE_STOPPED;
+        serviceStatus.dwWin32ExitCode = WSAGetLastError();
+        SetServiceStatus(statusHandle, &serviceStatus);
     }
+}
 
-    return 0;
+void WINAPI ServiceCtrlHandler(DWORD CtrlCode)
+{
+    switch (CtrlCode)
+    {
+    case SERVICE_CONTROL_STOP:
+        if (serviceStatus.dwCurrentState != SERVICE_RUNNING)
+        {
+            break;
+        }
+
+        serviceStatus.dwControlsAccepted = 0;
+        serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+        SetServiceStatus(statusHandle, &serviceStatus);
+
+        QueueUserAPC(StopMainThread, hMainThread, (ULONG_PTR)nullptr);
+
+        break;
+
+    case SERVICE_CONTROL_INTERROGATE:
+        break;
+    }
 }

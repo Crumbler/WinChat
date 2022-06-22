@@ -1,36 +1,26 @@
+#include <winsock2.h>
 #include "PipeThread.hpp"
+#include "WorkerThread.hpp"
 
 #include <cstdio>
-#include <unordered_map>
 #include "ClientKey.hpp"
 
-struct strPtrHash
-{
-    unsigned operator()(std::string *s) const
-    {
-        return std::hash<std::string>()(*s);
-    }
-};
-
-struct strPtrEqual
-{
-    unsigned operator()(std::string *s1, std::string *s2) const
-    {
-        return *s1 == *s2;
-    }
-};
-
 constexpr int bufSize = 256;
-
+bool stopPipeThread = false;
 extern CRITICAL_SECTION clientsSection;
-extern std::unordered_map<std::string*, ClientKey*, strPtrHash, strPtrEqual> clients;
+
+void StopPipeThread(ULONG_PTR p)
+{
+    stopPipeThread = true;
+}
 
 unsigned __stdcall PipeThread(void *param)
 {
     printf("Pipe thread started\n");
 
-    HANDLE hPipe = CreateNamedPipeA("\\\\.\\pipe\\tcpwatcher", PIPE_ACCESS_OUTBOUND,
-                     PIPE_TYPE_BYTE | PIPE_WAIT, 1, bufSize, 0, 0, nullptr);
+    HANDLE hPipe = CreateNamedPipeA("\\\\.\\pipe\\tcpwatcher",
+                                    PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
+                                    PIPE_TYPE_BYTE | PIPE_WAIT, 1, bufSize, 0, 0, nullptr);
 
     if (hPipe == INVALID_HANDLE_VALUE)
     {
@@ -38,13 +28,23 @@ unsigned __stdcall PipeThread(void *param)
         return 0;
     }
 
+    OVERLAPPED ov;
+    ZeroMemory(&ov, sizeof(ov));
+    ov.hEvent = CreateEventA(nullptr, false, false, nullptr);
+
     while (true)
     {
-        int iResult = ConnectNamedPipe(hPipe, nullptr);
-        if (iResult == 0)
+        int iResult = ConnectNamedPipe(hPipe, &ov);
+        if (iResult != 0)
         {
             fprintf(stderr, "Pipe connection failed: %lu", GetLastError());
             continue;
+        }
+
+        iResult = WaitForSingleObjectEx(ov.hEvent, INFINITE, true);
+        if (iResult == WAIT_IO_COMPLETION && stopPipeThread)
+        {
+            break;
         }
 
         DWORD trBytes;
@@ -76,6 +76,9 @@ unsigned __stdcall PipeThread(void *param)
     }
 
     CloseHandle(hPipe);
+    CloseHandle(ov.hEvent);
+
+    printf("Pipe thread closed\n");
 
     return 0;
 }

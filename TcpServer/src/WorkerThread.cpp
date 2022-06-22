@@ -6,26 +6,9 @@
 #include "ClientKey.hpp"
 #include "MessageType.hpp"
 
-struct strPtrHash
-{
-    unsigned operator()(std::string *s) const
-    {
-        return std::hash<std::string>()(*s);
-    }
-};
-
-struct strPtrEqual
-{
-    unsigned operator()(std::string *s1, std::string *s2) const
-    {
-        return *s1 == *s2;
-    }
-};
-
 extern HANDLE cmpPort;
 extern CRITICAL_SECTION clientsSection;
 constexpr int sendBufSize = 256;
-std::unordered_map<std::string*, ClientKey*, strPtrHash, strPtrEqual> clients;
 
 void RemoveClient(ClientKey *key);
 
@@ -44,7 +27,11 @@ unsigned __stdcall WorkerThread(void *param)
         WINBOOL iResult =
             GetQueuedCompletionStatus(cmpPort, &trBytes, (PULONG_PTR)&pKey,
                                       (OVERLAPPED **)&pOv, INFINITE);
-
+        if (pKey == nullptr && pOv == nullptr)
+        {
+            // Closing thread
+            break;
+        }
         if (iResult == 0)
         {
             const DWORD errorCode = GetLastError();
@@ -182,6 +169,10 @@ unsigned __stdcall WorkerThread(void *param)
     }
 
     delete[] sendBuf;
+
+    printf("Worker thread closed\n");
+
+    return 0;
 }
 
 // Remove a client after disconnection
