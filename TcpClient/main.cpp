@@ -10,8 +10,8 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 constexpr wchar_t szClassName[] = L"TcpClient";
 
-constexpr int initialWidth = 1280,
-    initialHeight = 720;
+constexpr int initialWidth = 500,
+    initialHeight = 400;
 
 HINSTANCE hInstanceMain;
 
