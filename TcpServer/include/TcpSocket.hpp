@@ -10,7 +10,7 @@ class TcpSocket
         TcpSocket(SOCKET sock);
         ~TcpSocket();
 
-        void Bind(const wchar_t *addr, const wchar_t *port);
+        void Bind(const char *addr, const char *port);
         void Listen(int backlog);
         TcpSocket* Accept();
 

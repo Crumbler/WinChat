@@ -26,9 +26,9 @@ TcpSocket::~TcpSocket()
     }
 }
 
-void TcpSocket::Bind(const wchar_t *addr, const wchar_t *port)
+void TcpSocket::Bind(const char *addr, const char *port)
 {
-    ADDRINFOW hints, *result;
+    addrinfo hints, *result;
 
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -36,7 +36,7 @@ void TcpSocket::Bind(const wchar_t *addr, const wchar_t *port)
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
-    int iResult = GetAddrInfoW(addr, port, &hints, &result);
+    int iResult = getaddrinfo(addr, port, &hints, &result);
     if (iResult != 0)
     {
         fprintf(stderr, "getaddrinfo failed: %d\n", iResult);
@@ -49,7 +49,7 @@ void TcpSocket::Bind(const wchar_t *addr, const wchar_t *port)
         fprintf(stderr, "Error at bind(): %d\n", WSAGetLastError());
     }
 
-    FreeAddrInfoW(result);
+    freeaddrinfo(result);
 }
 
 void TcpSocket::Listen(int backlog)

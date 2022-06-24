@@ -17,7 +17,7 @@
 
 constexpr int socketBufSize = 256,
     listenQueueSize = 10;
-constexpr wchar_t serverPort[] = L"27000";
+constexpr char serverPort[] = "27000";
 
 HANDLE cmpPort, hPipeThread;
 extern HANDLE hMainThread;
