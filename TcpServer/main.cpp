@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include "TcpSocket.hpp"
 #include "MainThread.hpp"
+#include "ServerConfig.hpp"
+#include "pugixml.hpp"
 #include <windows.h>
 
 SERVICE_STATUS serviceStatus;
@@ -14,6 +16,8 @@ void WINAPI ServiceMain(DWORD argc, char *argv);
 void WINAPI ServiceCtrlHandler(DWORD);
 
 WSADATA wsaData;
+
+ServerConfig *config;
 char serviceName[] = "Chat server";
 
 bool Startup();
@@ -59,7 +63,7 @@ void WINAPI ServiceMain(DWORD argc, char *argv)
     serviceStatus.dwCurrentState = SERVICE_RUNNING;
     SetServiceStatus(statusHandle, &serviceStatus);
 
-    hMainThread = (HANDLE)_beginthreadex(nullptr, 0, MainThread, nullptr, 0, nullptr);
+    hMainThread = (HANDLE)_beginthreadex(nullptr, 0, MainThread, config, 0, nullptr);
 
     WaitForSingleObject(hMainThread, INFINITE);
     CloseHandle(hMainThread);
@@ -73,6 +77,10 @@ void WINAPI ServiceMain(DWORD argc, char *argv)
 
 bool Startup()
 {
+    constexpr int defaultPort = 27000,
+        defaultListenQueueSize = 10,
+        defaultSpinCount = 4000;
+
     constexpr WORD wVersionRequested = MAKEWORD(2, 2);
 
     setbuf(stderr, nullptr);
@@ -87,11 +95,36 @@ bool Startup()
         return false;
     }
 
+    config = new ServerConfig();
+
+    wchar_t *path = new wchar_t[256];
+    GetModuleFileNameW(nullptr, path, 256);
+
+    wchar_t *s = wcsrchr(path, L'\\');
+
+    // Replace executable name with the config file name
+    wcscpy(s + 1, L"config.xml");
+
+    pugi::xml_document doc;
+
+    doc.load_file(path);
+
+    pugi::xml_node root = doc.child("ServerConfig");
+
+    config->port = root.child("Port").text().as_int(defaultPort);
+    config->threadCount = root.child("ThreadCount").text().as_int(0);
+    config->listenQueueSize = root.child("ListenQueueSize").text().as_int(defaultListenQueueSize);
+    config->spinCount = root.child("SpinCount").text().as_int(defaultSpinCount);
+
+    delete[] path;
+
     return true;
 }
 
 void Cleanup()
 {
+    delete config;
+
     if (WSACleanup() != 0)
     {
         serviceStatus.dwCurrentState = SERVICE_STOPPED;

@@ -14,10 +14,9 @@
 #include "MessageType.hpp"
 #include "IOType.hpp"
 #include "IOOverlapped.hpp"
+#include "ServerConfig.hpp"
 
-constexpr int socketBufSize = 256,
-    listenQueueSize = 10;
-constexpr char serverPort[] = "27000";
+constexpr int socketBufSize = 256;
 
 HANDLE cmpPort, hPipeThread;
 extern HANDLE hMainThread;
@@ -32,16 +31,20 @@ void StopMainThread(ULONG_PTR p)
 
 unsigned _stdcall MainThread(void *param)
 {
-    SYSTEM_INFO systemInfo;
+    const ServerConfig *config = (const ServerConfig*)param;
 
-    GetSystemInfo(&systemInfo);
+    int threadCount = config->threadCount;
+    if (threadCount == 0)
+    {
+        SYSTEM_INFO systemInfo;
+        GetSystemInfo(&systemInfo);
 
-    const int threadCount = systemInfo.dwNumberOfProcessors * 2;
+        threadCount = systemInfo.dwNumberOfProcessors * 2;
+    }
 
     HANDLE *workerThreads = new HANDLE[threadCount];
 
-    constexpr int spinCount = 4000;
-    InitializeCriticalSectionAndSpinCount(&clientsSection, spinCount);
+    InitializeCriticalSectionAndSpinCount(&clientsSection, config->spinCount);
 
     cmpPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE,
                                      nullptr, 0, threadCount);
@@ -55,8 +58,8 @@ unsigned _stdcall MainThread(void *param)
 
     TcpSocket* listenSocket = new TcpSocket();
 
-    listenSocket->Bind(nullptr, serverPort);
-    listenSocket->Listen(listenQueueSize);
+    listenSocket->Bind(nullptr, std::to_string(config->port).c_str());
+    listenSocket->Listen(config->listenQueueSize);
 
     DWORD dwBytes;
     LPFN_ACCEPTEX AcceptEx = nullptr;
