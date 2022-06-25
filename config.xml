@@ -1,0 +1,6 @@
+<ServerConfig>
+	<Port>28000</Port>
+	<ThreadCount>8</ThreadCount>
+	<ListenQueueSize>10</ListenQueueSize>
+	<SpinCount>4000</SpinCount>
+</ServerConfig>
