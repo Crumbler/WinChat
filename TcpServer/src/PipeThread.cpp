@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include "ClientKey.hpp"
+#include "ServerConfig.hpp"
 
 constexpr int bufSize = 256;
 bool stopPipeThread = false;
@@ -18,7 +19,9 @@ unsigned __stdcall PipeThread(void *param)
 {
     printf("Pipe thread started\n");
 
-    HANDLE hPipe = CreateNamedPipeA("\\\\.\\pipe\\tcpwatcher",
+    const ServerConfig *config = (const ServerConfig*)param;
+
+    HANDLE hPipe = CreateNamedPipeA(config->pipeName.c_str(),
                                     PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
                                     PIPE_TYPE_BYTE | PIPE_WAIT, 1, bufSize, 0, 0, nullptr);
 

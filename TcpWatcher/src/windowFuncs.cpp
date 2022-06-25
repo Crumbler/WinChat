@@ -3,21 +3,22 @@
 #include <cstdio>
 
 #include <gdiplus.h>
+#include <windowsx.h>
 
 #include "logControl.hpp"
 
 using namespace Gdiplus;
 
-constexpr int idBtnFetch = 0, idLog = 1;
+constexpr int idBtnFetch = 0, idLog = 1, idLabelPipeName = 2, idEditPipeName = 3;
 
-constexpr int panelWidth = 80,
+constexpr int panelWidth = 120,
     padding = 10;
 
 constexpr int bufSize = 256;
 
 int clientWidth, clientHeight;
 
-HWND hFetchButton, hLog;
+HWND hFetchButton, hLog, hEditPipeName;
 
 void CalculateControlPositions();
 void OnFetch();
@@ -43,6 +44,16 @@ void OnCreate(HWND hwnd, HINSTANCE hInstance)
                          WS_CHILD | WS_VISIBLE | WS_VSCROLL,
                          0, 0, 0, 0, hwnd,
                          (HMENU)idLog, hInstance, nullptr);
+
+    CreateWindowW(L"STATIC", L"Pipe name:",
+                  WS_CHILD | WS_VISIBLE | SS_LEFT,
+                  padding, 50, panelWidth - padding, 20, hwnd,
+                  (HMENU)idLabelPipeName, hInstance, nullptr);
+
+    hEditPipeName = CreateWindowW(L"EDIT", L"",
+                                  WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+                                  padding, 70, panelWidth - padding * 2, 20, hwnd,
+                                  (HMENU)idEditPipeName, hInstance, nullptr);
 }
 
 void OnResize(HWND hwnd, int resizeType, int newWidth, int newHeight)
@@ -100,11 +111,20 @@ void OnControl(HWND hwnd, HWND hwndControl, int idNotify, int idControl)
 void OnFetch()
 {
     char *buf = new char[bufSize],
-        *strBuf = new char[bufSize];
+        *strBuf = new char[bufSize],
+        *pipeNameBuf = new char[bufSize];
+
+    strcpy(pipeNameBuf, "\\\\.\\pipe\\A");
+    constexpr int len = strlen("\\\\.\\pipe\\");
+
+    if (Edit_GetTextLength(hEditPipeName) > 0)
+    {
+        Edit_GetText(hEditPipeName, pipeNameBuf + len, bufSize - len);
+    }
 
     ClearLog();
 
-    HANDLE hPipe = CreateFileA("\\\\.\\pipe\\tcpwatcher", GENERIC_READ, 0, nullptr,
+    HANDLE hPipe = CreateFileA(pipeNameBuf, GENERIC_READ, 0, nullptr,
                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
     if (hPipe == INVALID_HANDLE_VALUE)
@@ -143,6 +163,7 @@ void OnFetch()
 
     CloseHandle(hPipe);
 
+    delete[] pipeNameBuf;
     delete[] strBuf;
     delete[] buf;
 }

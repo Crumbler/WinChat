@@ -54,7 +54,7 @@ unsigned _stdcall MainThread(void *param)
         workerThreads[i] = (HANDLE)_beginthreadex(nullptr, 0, WorkerThread, nullptr, 0, nullptr);
     }
 
-    hPipeThread = (HANDLE)_beginthreadex(nullptr, 0, PipeThread, nullptr, 0, nullptr);
+    hPipeThread = (HANDLE)_beginthreadex(nullptr, 0, PipeThread, param, 0, nullptr);
 
     TcpSocket* listenSocket = new TcpSocket();
 

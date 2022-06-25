@@ -81,6 +81,8 @@ bool Startup()
         defaultListenQueueSize = 10,
         defaultSpinCount = 4000;
 
+    constexpr char defaultPipeName[] = "tcpwatcher";
+
     constexpr WORD wVersionRequested = MAKEWORD(2, 2);
 
     setbuf(stderr, nullptr);
@@ -115,6 +117,9 @@ bool Startup()
     config->threadCount = root.child("ThreadCount").text().as_int(0);
     config->listenQueueSize = root.child("ListenQueueSize").text().as_int(defaultListenQueueSize);
     config->spinCount = root.child("SpinCount").text().as_int(defaultSpinCount);
+
+    const char *pipeName = root.child("PipeName").text().as_string(defaultPipeName);
+    config->setPipeName(pipeName);
 
     delete[] path;
 

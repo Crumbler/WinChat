@@ -1,11 +1,7 @@
 #include "ServerConfig.hpp"
 
-ServerConfig::ServerConfig()
+void ServerConfig::setPipeName(const char* s)
 {
-
-}
-
-ServerConfig::~ServerConfig()
-{
-
+    this->pipeName = "\\\\.\\pipe\\";
+    this->pipeName += s;
 }

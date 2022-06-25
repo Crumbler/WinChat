@@ -53,6 +53,8 @@
 		<Unit filename="include/ServerConfig.hpp" />
 		<Unit filename="include/TcpSocket.hpp" />
 		<Unit filename="include/WorkerThread.hpp" />
+		<Unit filename="include/pugiconfig.hpp" />
+		<Unit filename="include/pugixml.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="src/ClientKey.cpp" />
 		<Unit filename="src/MainThread.cpp" />
@@ -60,6 +62,7 @@
 		<Unit filename="src/ServerConfig.cpp" />
 		<Unit filename="src/TcpSocket.cpp" />
 		<Unit filename="src/WorkerThread.cpp" />
+		<Unit filename="src/pugixml.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
